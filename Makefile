@@ -30,8 +30,14 @@ dist-clean:
 # Format the sources
 .PHONY: format
 format:
-	@find src -name '*pp' -type f | xargs $(CLANG_FORMAT) -i
+	@find include -name '*pp' -type f | xargs $(CLANG_FORMAT) -i
+	@find tests -name '*pp' -type f | xargs $(CLANG_FORMAT) -i
 
+
+.PHONY: test
+test:
+	@cd ./build_debug
+	@ctest --config Debug
 # # Install
 # .PHONY: install-debug install-release
 # install-debug install-release: install-%: build-%

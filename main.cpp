@@ -1,6 +1,7 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
+#include <exception>
 
 #include "KVector.hpp"
 
@@ -15,26 +16,37 @@ struct NonDefaultConstr {
 };
 
 struct Kek {
+  long long* ptr;
+
   Kek() {
-    std::cout << "Kek()\n";
+    // std::cout << "Kek()\n";
     ptr = new long long(5);
   }
-  Kek(const Kek& some_kek) {
-    std::cout << "Kek(const Kek&)\n";
-    ptr = new long long(*(some_kek.ptr));
-  }
-  long long* ptr;
+
   ~Kek() {
-    std::cout << "~Kek()\n";
+    // std::cout << "~Kek()\n";
     delete ptr;
   }
+  Kek(const Kek& some_kek) {
+    // std::cout << "Kek(const Kek&)\n";
+    ptr = new long long(*(some_kek.ptr));
+  }
+  Kek(Kek&& some_kek) {
+    // std::cout << "Kek(Kek&&)\n";
+    ptr = some_kek.ptr;
+    some_kek.ptr = nullptr;
+  }
 };
-
 
 int main() {
   Kek kek;
   ink::KVector<Kek> kek_vec;
-  kek_vec.push_back(kek);
+  try {
+    kek_vec.push_back(kek);
+  } catch (std::exception& e) {
+    std::cout << e.what() << "\n";
+  }
+  kek_vec.push_back(std::move(kek));
 
   ink::KVector<int> vec;
   for (int i = 0; i < 5; ++i) {
@@ -44,4 +56,9 @@ int main() {
     std::cout << vec[i] << " ";
   }
   std::cout << '\n';
+
+  std::cout << vec.size() << " " << vec.empty() << "\n";
+
+  ink::KVector<int> empty_vec_;
+  std::cout << empty_vec_.empty() << " " << empty_vec_.size() << "\n";
 }

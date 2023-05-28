@@ -1,1 +1,0 @@
-/usr/bin/c++  -fsanitize=address -g CMakeFiles/KVector.dir/main.cpp.o -o KVector 

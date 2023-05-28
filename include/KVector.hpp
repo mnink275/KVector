@@ -11,25 +11,60 @@
 namespace ink {
 
 template <class T, class Alloc = std::allocator<T>>
-class KVector {
+class KVector final {
  public:
   using alloc_traits = std::allocator_traits<Alloc>;
 
   using value_type = T;
   using pointer = T*;
-  // using alloc = std::allocator_traits<Alloc>;
 
  public:
   KVector() = default;
   ~KVector() {
     for (int i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, buffer_ + i);  
+      alloc_traits::destroy(alloc_, buffer_ + i);
     }
     alloc_traits::deallocate(alloc_, buffer_, capacity_);
   }
 
   KVector(std::size_t size, const value_type& value,
           const Alloc& alloc = Alloc()) {}
+
+  value_type& operator[](std::size_t idx) const noexcept {
+    return *(buffer_ + idx);
+  }
+
+  // Capacity
+  bool empty() const noexcept {
+    return size_ == 0;
+  }
+
+  std::size_t size() const  noexcept {
+    return size_;
+  }
+
+  void reserve(std::size_t new_capacity) {
+    if (new_capacity > capacity_) {
+      reallocateBuffer(2 * new_capacity + 1);
+    }
+  }
+
+  std::size_t capacity() const noexcept {
+    return capacity_;
+  }
+
+  void shrink_to_fit() {
+    if (capacity_ > size_) {
+      alloc_traits::deallocate(alloc_, buffer_ + size_, capacity_ - size_);
+    }
+  }
+
+  // Modifiers
+  void clear() noexcept {
+    for (int i = 0; i < size_; ++i) {
+      alloc_traits::destroy(alloc_, buffer_ + i);
+    }
+  }
 
   template <class SomeType>
   void push_back(SomeType&& value) {
@@ -43,24 +78,15 @@ class KVector {
     ++size_;
   }
 
-  value_type& operator[](std::size_t idx) const noexcept {
-    return *(buffer_ + idx);
-  }
-
-  void resize(std::size_t new_size) { resizeVector(new_size); }
-  void resize(std::size_t new_size, const value_type& value) {
-    resizeVector(new_size, value);
-  }
-
-  void reserve(std::size_t new_capacity) {
-    if (new_capacity > capacity_) {
-      reallocateBuffer(2 * new_capacity + 1);
-    }
-  }
-
   void pop_back() noexcept {
     --size_;
     alloc_traits::destroy(alloc_, buffer_ + size_);
+  }
+
+  void resize(std::size_t new_size) { resizeVector(new_size); }
+
+  void resize(std::size_t new_size, const value_type& value) {
+    resizeVector(new_size, value);
   }
 
  private:
@@ -108,7 +134,7 @@ class KVector {
       if (new_size > capacity_) {
         reallocateBuffer(new_size);
       }
-      int idx = size_;
+      std::size_t idx = size_;
       try {
         for (; idx < new_size; ++idx) {
           alloc_traits::construct(alloc_, buffer_ + idx,
@@ -125,13 +151,10 @@ class KVector {
     }
   }
 
-  void constructElementsInRange(pointer left, pointer right,
-                                const value_type& value) {}
-
  private:
   std::size_t size_{0};
   std::size_t capacity_{0};
-  std::allocator<value_type> alloc_;
+  std::allocator<value_type> alloc_; // TODO: EBCO
 
   pointer buffer_{nullptr};
 };
