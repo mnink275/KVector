@@ -16,7 +16,6 @@
   ```shell
   git clone https://github.com/mnink275/KVector
   cd KVector/
-  cmake -S . -B build
-  cmake --build build
+  make build-debug
   ./build/KVector
   ```
