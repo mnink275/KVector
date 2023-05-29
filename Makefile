@@ -35,9 +35,8 @@ format:
 
 
 .PHONY: test
-test:
-	@cd ./build_debug
-	@ctest --config Debug
+test: build-debug
+	@cd ./build_debug && ctest --config Debug
 # # Install
 # .PHONY: install-debug install-release
 # install-debug install-release: install-%: build-%
