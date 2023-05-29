@@ -35,27 +35,21 @@ class KVector final {
   }
 
   // Capacity
-  bool empty() const noexcept {
-    return size_ == 0;
-  }
+  bool empty() const noexcept { return size_ == 0; }
 
-  std::size_t size() const  noexcept {
-    return size_;
-  }
+  std::size_t size() const noexcept { return size_; }
 
   void reserve(std::size_t new_capacity) {
     if (new_capacity > capacity_) {
-      reallocateBuffer(2 * new_capacity + 1);
+      reallocateBuffer(new_capacity);
     }
   }
 
-  std::size_t capacity() const noexcept {
-    return capacity_;
-  }
+  std::size_t capacity() const noexcept { return capacity_; }
 
   void shrink_to_fit() {
     if (capacity_ > size_) {
-      alloc_traits::deallocate(alloc_, buffer_ + size_, capacity_ - size_);
+      reallocateBuffer(size_);
     }
   }
 
@@ -69,10 +63,11 @@ class KVector final {
   template <class SomeType>
   void push_back(SomeType&& value) {
     if (size_ == capacity_) {
-      reserve(2 * capacity_ + 1);
+      auto new_capacity = size_ == 0 ? 1 : 2 * capacity_;
+      reserve(new_capacity);
     }
 
-    const auto& construction_place = size_ == 0 ? buffer_ : buffer_ + size_;
+    const auto& construction_place = buffer_ + size_;
     alloc_traits::construct(alloc_, construction_place,
                             std::forward<SomeType>(value));
     ++size_;
@@ -95,7 +90,14 @@ class KVector final {
 
     if (buffer_ != nullptr) {
       try {
-        createBufferCopy(new_buffer, buffer_);
+        if constexpr (std::is_nothrow_move_constructible_v<value_type> ||
+                      !std::is_copy_constructible_v<value_type>) {
+          std::cout << "Move\n";
+          createBufferMove(new_buffer, buffer_);
+        } else {
+          std::cout << "Copy\n";
+          createBufferCopy(new_buffer, buffer_);
+        }
       } catch (...) {
         alloc_traits::deallocate(alloc_, new_buffer, new_capacity);
         throw;
@@ -110,14 +112,33 @@ class KVector final {
   void createBufferCopy(pointer new_buffer, pointer old_buffer) {
     int idx = 0;
     try {
+      // constructing new data using copy-constructor
       for (; idx < size_; ++idx) {
         alloc_traits::construct(alloc_, new_buffer + idx, old_buffer[idx]);
       }
     } catch (...) {
+      // calling the new data destructors
       for (int del_idx = 0; del_idx < idx; ++del_idx) {
         alloc_traits::destroy(alloc_, new_buffer + del_idx);
       }
       throw;
+    }
+    // calling the old data destructors
+    for (int i = 0; i < size_; ++i) {
+      alloc_traits::destroy(alloc_, old_buffer + i);
+    }
+  }
+
+  void createBufferMove(pointer new_buffer, pointer old_buffer) {
+    int idx = 0;
+    // constructing new data using move-constructor
+    for (; idx < size_; ++idx) {
+      alloc_traits::construct(alloc_, new_buffer + idx,
+                              std::move(old_buffer[idx]));
+    }
+    // calling the old data destructors
+    for (int i = 0; i < size_; ++i) {
+      alloc_traits::destroy(alloc_, old_buffer + i);
     }
   }
 
@@ -154,7 +175,7 @@ class KVector final {
  private:
   std::size_t size_{0};
   std::size_t capacity_{0};
-  std::allocator<value_type> alloc_; // TODO: EBCO
+  std::allocator<value_type> alloc_;  // TODO: EBCO
 
   pointer buffer_{nullptr};
 };
