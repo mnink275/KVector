@@ -61,7 +61,7 @@ class KVectorTest : public ::testing::Test {
 TEST_F(KVectorTest, pop_back) {
   EXPECT_TRUE(empty_vec_.empty());
   EXPECT_EQ(empty_vec_.size(), 0);
-  
+
   ASSERT_EQ(int_vec_.size(), 5);
   for (int i = 0; i < 5; ++i) {
     int_vec_.pop_back();
@@ -87,7 +87,7 @@ TEST_F(KVectorTest, reserve_resize) {
   empty_vec_.resize(5);
   EXPECT_FALSE(empty_vec_.empty());
   EXPECT_EQ(empty_vec_.size(), 5);
-  
+
   EXPECT_EQ(int_vec_.capacity(), 8);
   int_vec_.reserve(10);
   EXPECT_EQ(int_vec_.capacity(), 10);

@@ -10,13 +10,20 @@
 
 namespace ink {
 
-template <class T, class Alloc = std::allocator<T>>
+template <class T, class Allocator = std::allocator<T>>
 class KVector final {
- public:
-  using alloc_traits = std::allocator_traits<Alloc>;
+ private:
+  using alloc_traits = std::allocator_traits<Allocator>;
 
+ public:
   using value_type = T;
-  using pointer = T*;
+  using allocator_type = Allocator;
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
+  using reference = value_type&;
+  using const_reference = const value_type&;
+  using pointer = typename alloc_traits::pointer;
+  using const_pointer = typename alloc_traits::const_pointer;
 
  public:
   KVector() = default;
@@ -28,7 +35,7 @@ class KVector final {
   }
 
   KVector(std::size_t size, const value_type& value,
-          const Alloc& alloc = Alloc()) {}
+          const Allocator& alloc = Allocator()) {}
 
   value_type& operator[](std::size_t idx) const noexcept {
     return *(buffer_ + idx);
