@@ -14,7 +14,7 @@ struct NonDefaultConstr {
 };
 
 struct Kek {
-  long long* ptr;
+  long long* ptr{nullptr};
 
   Kek() {
     // std::cout << "Kek()\n";
@@ -29,13 +29,15 @@ struct Kek {
     // std::cout << "Kek(const Kek&)\n";
     ptr = new long long(*(some_kek.ptr));
   }
-  Kek(Kek&& some_kek) {
+  Kek(Kek&& some_kek) noexcept {
     // std::cout << "Kek(Kek&&)\n";
+    delete ptr;
     ptr = some_kek.ptr;
     some_kek.ptr = nullptr;
   }
 };
 
+#if 1
 // Test Fixture
 class KVectorTest : public ::testing::Test {
  protected:
@@ -54,25 +56,57 @@ class KVectorTest : public ::testing::Test {
   ink::KVector<Kek> kek_move_vec_;
 };
 
+#endif
+
 TEST_F(KVectorTest, pop_back) {
   EXPECT_TRUE(empty_vec_.empty());
   EXPECT_EQ(empty_vec_.size(), 0);
-
+  
   ASSERT_EQ(int_vec_.size(), 5);
-  for (int i = 0; i < 5; ++i) int_vec_.pop_back();
+  for (int i = 0; i < 5; ++i) {
+    int_vec_.pop_back();
+  }
   EXPECT_EQ(int_vec_.size(), 0);
 
   ASSERT_EQ(kek_copy_vec_.size(), 5);
-  for (int i = 0; i < 5; ++i) kek_copy_vec_.pop_back();
+  for (int i = 0; i < 5; ++i) {
+    kek_copy_vec_.pop_back();
+  }
   EXPECT_EQ(kek_copy_vec_.size(), 0);
 
   ASSERT_EQ(kek_move_vec_.size(), 5);
-  for (int i = 0; i < 5; ++i) kek_move_vec_.pop_back();
+  for (int i = 0; i < 5; ++i) {
+    kek_move_vec_.pop_back();
+  }
   EXPECT_EQ(kek_move_vec_.size(), 0);
 }
 
+TEST_F(KVectorTest, reserve_resize) {
+  empty_vec_.reserve(5);
+  EXPECT_TRUE(empty_vec_.empty());
+  empty_vec_.resize(5);
+  EXPECT_FALSE(empty_vec_.empty());
+  EXPECT_EQ(empty_vec_.size(), 5);
+  
+  EXPECT_EQ(int_vec_.capacity(), 8);
+  int_vec_.reserve(10);
+  EXPECT_EQ(int_vec_.capacity(), 10);
 
-#if 0 // future tests
+  for (int i = 5; i < 10; ++i) {
+    int_vec_.push_back(i);
+  }
+  EXPECT_EQ(int_vec_.capacity(), 10);
+
+  int_vec_.resize(3);
+  EXPECT_EQ(int_vec_.capacity(), 10);
+  EXPECT_EQ(int_vec_.size(), 3);
+
+  int_vec_.shrink_to_fit();
+  EXPECT_EQ(int_vec_.capacity(), 3);
+  EXPECT_EQ(int_vec_.size(), 3);
+}
+
+#if 0  // future tests
 // find()
 TEST(UMapMethod, find) {
   ink::KUnorderedMap<int, int> local_int_map;
