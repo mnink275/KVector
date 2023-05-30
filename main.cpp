@@ -42,43 +42,35 @@ struct Kek {
 
 int main() {
   ink::KVector<int> vec;
+  vec.reserve(5);
   for (int i = 0; i < 5; ++i) {
-    vec.push_back(i);
+    vec.emplace_back(i);
   }
 
-  auto it = vec.begin();
-  std::cout << *it;
-  std::cout << "\n";
+  std::vector<int> std_vec(5);
+  auto std_it = std_vec.begin();
+  int shift_int = 5;
+  std_it += shift_int;
+  
+  long long shift_long = 5;
+  std_it += shift_long;
 
-  for (auto&& num : vec) {
+  auto const_std_it = std_vec.cbegin();
+  (const_std_it + 5);
+
+  ink::KVector<int> new_vec(vec.begin(), vec.end());
+  for (auto&& num : new_vec) {
     std::cout << num << " ";
   }
   std::cout << "\n";
-  // vec.reserve(5);
-  // vec.push_back(1);
-  // vec.push_back(2);
-  // vec.shrink_to_fit();
 
-  // Kek kek;
-  // ink::KVector<Kek> kek_vec;
-  // try {
-  //   kek_vec.push_back(kek);
-  // } catch (std::exception& e) {
-  //   std::cout << e.what() << "\n";
-  // }
 
-  // ink::KVector<Kek> kek_vec;
-  // for (int i = 0; i < 2; ++i) {
-  //   Kek kek;
-  //   kek_vec.push_back(std::move(kek));
-  // }
+  // auto it = vec.begin();
+  // std::cout << *it;
+  // std::cout << "\n";
 
-  //kek_vec.push_back(std::move(kek));
-
-  // ink::KVector<int> vec;
-  // for (int i = 0; i < 5; ++i) {
-  //   vec.push_back(i);
-  //   std::cout << vec.capacity() << " ";
+  // for (auto&& num : vec) {
+  //   std::cout << num << " ";
   // }
   // std::cout << "\n";
 }

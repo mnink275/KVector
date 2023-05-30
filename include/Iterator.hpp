@@ -27,6 +27,16 @@ class CommonIterator {
   CommonIterator(const CommonIterator<T, false>& non_const_it) noexcept
       : ptr_(non_const_it.ptr_) {}
 
+  CommonIterator& operator+=(const difference_type shift) noexcept {
+    ptr_ += shift;
+    return *this;
+  }
+
+  CommonIterator& operator-=(const difference_type shift) noexcept {
+    ptr_ -= shift;
+    return *this;
+  }
+
   std::conditional_t<IsConst, const value_type&, value_type&> operator*()
       const noexcept {
     return *ptr_;
@@ -46,7 +56,7 @@ class CommonIterator {
       const noexcept {
     return ptr_;
   }
-  
+
   friend bool operator!=(const CommonIterator& left,
                          const CommonIterator& right) {
     return left.ptr_ != right.ptr_;
@@ -57,8 +67,43 @@ class CommonIterator {
     return left.ptr_ == right.ptr_;
   }
 
+  friend difference_type operator-(const CommonIterator& lhs,
+                                   const CommonIterator& rhs) noexcept {
+    return (lhs.ptr_ - rhs.ptr_);
+  }
+
  private:
   pointer ptr_;
 };
+
+template <class T, bool IsConst>
+using diff_type = typename CommonIterator<T, IsConst>::difference_type;
+
+template <class T, bool IsConst>
+CommonIterator<T, IsConst> operator+(
+    const CommonIterator<T, IsConst>& it,
+    const diff_type<T, IsConst> shift) noexcept {
+  auto tmp = it;
+  tmp += shift;
+  return tmp;
+}
+
+template <class T, bool IsConst>
+CommonIterator<T, IsConst> operator+(
+    const diff_type<T, IsConst> shift,
+    const CommonIterator<T, IsConst>& it) noexcept {
+  auto tmp = it;
+  tmp += shift;
+  return tmp;
+}
+
+template <class T, bool IsConst>
+CommonIterator<T, IsConst> operator-(
+    const CommonIterator<T, IsConst>& it,
+    const diff_type<T, IsConst> shift) noexcept {
+  auto tmp = it;
+  tmp -= shift;
+  return tmp;
+}
 
 }  // namespace ink

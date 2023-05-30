@@ -31,14 +31,26 @@ class KVector final {
  public:
   KVector() = default;
   ~KVector() {
+    // calling the data destructors
     for (int i = 0; i < size_; ++i) {
       alloc_traits::destroy(alloc_, buffer_ + i);
     }
+    // clearing memory
     alloc_traits::deallocate(alloc_, buffer_, capacity_);
   }
 
   KVector(std::size_t size, const value_type& value,
           const Allocator& alloc = Allocator()) {}
+
+  template <class InputIt>
+  KVector(InputIt first, InputIt last) {
+    auto new_capacity = std::distance(first, last);
+    reserve(new_capacity);
+    while (first != last) {
+      emplace_back(*first);
+      ++first;
+    }
+  }
 
   // Element access
   value_type& operator[](std::size_t idx) const noexcept {
@@ -86,6 +98,11 @@ class KVector final {
 
   template <class SomeType>
   void push_back(SomeType&& value) {
+    emplace_back(std::forward<SomeType>(value));
+  }
+
+  template <class... Args>
+  void emplace_back(Args&&... args) {
     if (size_ == capacity_) {
       auto new_capacity = size_ == 0 ? 1 : 2 * capacity_;
       reserve(new_capacity);
@@ -93,7 +110,7 @@ class KVector final {
 
     const auto& construction_place = buffer_ + size_;
     alloc_traits::construct(alloc_, construction_place,
-                            std::forward<SomeType>(value));
+                            std::forward<Args>(args)...);
     ++size_;
   }
 
