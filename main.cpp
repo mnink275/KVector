@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <vector>
 #include <exception>
+#include <numeric>
 
 #include "include/KVector.hpp"
 
@@ -41,10 +42,22 @@ struct Kek {
 
 int main() {
   ink::KVector<int> vec;
-  vec.reserve(5);
-  vec.push_back(1);
-  vec.push_back(2);
-  vec.shrink_to_fit();
+  for (int i = 0; i < 5; ++i) {
+    vec.push_back(i);
+  }
+
+  auto it = vec.begin();
+  std::cout << *it;
+  std::cout << "\n";
+
+  for (auto&& num : vec) {
+    std::cout << num << " ";
+  }
+  std::cout << "\n";
+  // vec.reserve(5);
+  // vec.push_back(1);
+  // vec.push_back(2);
+  // vec.shrink_to_fit();
 
   // Kek kek;
   // ink::KVector<Kek> kek_vec;

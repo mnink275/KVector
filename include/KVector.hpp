@@ -1,12 +1,10 @@
 #pragma once
 
-#include <cassert>
-#include <cmath>
-#include <functional>
 #include <iostream>
-#include <memory>
-#include <utility>
+#include <iterator>
 #include <vector>
+
+#include "Iterator.hpp"
 
 namespace ink {
 
@@ -25,6 +23,11 @@ class KVector final {
   using pointer = typename alloc_traits::pointer;
   using const_pointer = typename alloc_traits::const_pointer;
 
+  using iterator = CommonIterator<T, false>;
+  using const_iterator = CommonIterator<T, false>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
  public:
   KVector() = default;
   ~KVector() {
@@ -37,9 +40,23 @@ class KVector final {
   KVector(std::size_t size, const value_type& value,
           const Allocator& alloc = Allocator()) {}
 
+  // Element access
   value_type& operator[](std::size_t idx) const noexcept {
     return *(buffer_ + idx);
   }
+
+  // Iterators
+  iterator begin() { return iterator(buffer_); }
+  const_iterator cbegin() { return const_iterator(buffer_); }
+
+  iterator end() { return iterator(buffer_ + size_); }
+  const_iterator cend() { return const_iterator(buffer_ + size_); }
+
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  const_reverse_iterator crbegin() { return const_reverse_iterator(cend()); }
+
+  reverse_iterator rend() { return reverse_iterator(begin()); }
+  const_reverse_iterator crend() { return const_reverse_iterator(cbegin()); }
 
   // Capacity
   bool empty() const noexcept { return size_ == 0; }
@@ -99,10 +116,8 @@ class KVector final {
       try {
         if constexpr (std::is_nothrow_move_constructible_v<value_type> ||
                       !std::is_copy_constructible_v<value_type>) {
-          std::cout << "Move\n";
           createBufferMove(new_buffer, buffer_);
         } else {
-          std::cout << "Copy\n";
           createBufferCopy(new_buffer, buffer_);
         }
       } catch (...) {

@@ -106,6 +106,16 @@ TEST_F(KVectorTest, reserve_resize) {
   EXPECT_EQ(int_vec_.size(), 3);
 }
 
+TEST_F(KVectorTest, iterators) {
+  EXPECT_EQ(empty_vec_.begin(), empty_vec_.end());
+  EXPECT_EQ(empty_vec_.rbegin(), empty_vec_.rend());
+
+  int value = 0;
+  for (auto&& num : int_vec_) {
+    EXPECT_EQ(num, value++);
+  }
+}
+
 #if 0  // future tests
 // find()
 TEST(UMapMethod, find) {
