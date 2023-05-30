@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iterator>
+#include <type_traits>
 #include <vector>
 
 #include "Iterator.hpp"
@@ -12,6 +13,9 @@ template <class T, class Allocator = std::allocator<T>>
 class KVector final {
  private:
   using alloc_traits = std::allocator_traits<Allocator>;
+  template <class InputIt>
+  using iterator_category_t =
+      typename std::iterator_traits<InputIt>::iterator_category;
 
  public:
   using value_type = T;
@@ -32,17 +36,21 @@ class KVector final {
   KVector() = default;
   ~KVector() {
     // calling the data destructors
-    for (int i = 0; i < size_; ++i) {
+    for (size_type i = 0; i < size_; ++i) {
       alloc_traits::destroy(alloc_, buffer_ + i);
     }
     // clearing memory
     alloc_traits::deallocate(alloc_, buffer_, capacity_);
   }
 
-  KVector(std::size_t size, const value_type& value,
-          const Allocator& alloc = Allocator()) {}
+  KVector(size_type size) { resize(size); }
 
-  template <class InputIt>
+  KVector(size_type size, const value_type& value) { resize(size, value); }
+
+  // SFINAE overload (imagine we don't have C++20 )
+  template <class InputIt,
+            class ExtraT = std::enable_if_t<std::is_base_of_v<
+                std::input_iterator_tag, iterator_category_t<InputIt>>>>
   KVector(InputIt first, InputIt last) {
     auto new_capacity = std::distance(first, last);
     reserve(new_capacity);
@@ -53,7 +61,7 @@ class KVector final {
   }
 
   // Element access
-  value_type& operator[](std::size_t idx) const noexcept {
+  value_type& operator[](size_type idx) const noexcept {
     return *(buffer_ + idx);
   }
 
@@ -73,15 +81,15 @@ class KVector final {
   // Capacity
   bool empty() const noexcept { return size_ == 0; }
 
-  std::size_t size() const noexcept { return size_; }
+  size_type size() const noexcept { return size_; }
 
-  void reserve(std::size_t new_capacity) {
+  void reserve(size_type new_capacity) {
     if (new_capacity > capacity_) {
       reallocateBuffer(new_capacity);
     }
   }
 
-  std::size_t capacity() const noexcept { return capacity_; }
+  size_type capacity() const noexcept { return capacity_; }
 
   void shrink_to_fit() {
     if (capacity_ > size_) {
@@ -91,7 +99,7 @@ class KVector final {
 
   // Modifiers
   void clear() noexcept {
-    for (int i = 0; i < size_; ++i) {
+    for (size_type i = 0; i < size_; ++i) {
       alloc_traits::destroy(alloc_, buffer_ + i);
     }
   }
@@ -119,14 +127,14 @@ class KVector final {
     alloc_traits::destroy(alloc_, buffer_ + size_);
   }
 
-  void resize(std::size_t new_size) { resizeVector(new_size); }
+  void resize(size_type new_size) { resizeVector(new_size); }
 
-  void resize(std::size_t new_size, const value_type& value) {
+  void resize(size_type new_size, const value_type& value) {
     resizeVector(new_size, value);
   }
 
  private:
-  void reallocateBuffer(std::size_t new_capacity) {
+  void reallocateBuffer(size_type new_capacity) {
     pointer new_buffer = alloc_traits::allocate(alloc_, new_capacity);
 
     if (buffer_ != nullptr) {
@@ -149,7 +157,7 @@ class KVector final {
   }
 
   void createBufferCopy(pointer new_buffer, pointer old_buffer) {
-    int idx = 0;
+    size_type idx = 0;
     try {
       // constructing new data using copy-constructor
       for (; idx < size_; ++idx) {
@@ -157,26 +165,26 @@ class KVector final {
       }
     } catch (...) {
       // calling the new data destructors
-      for (int del_idx = 0; del_idx < idx; ++del_idx) {
+      for (size_type del_idx = 0; del_idx < idx; ++del_idx) {
         alloc_traits::destroy(alloc_, new_buffer + del_idx);
       }
       throw;
     }
     // calling the old data destructors
-    for (int i = 0; i < size_; ++i) {
+    for (size_type i = 0; i < size_; ++i) {
       alloc_traits::destroy(alloc_, old_buffer + i);
     }
   }
 
   void createBufferMove(pointer new_buffer, pointer old_buffer) {
-    int idx = 0;
+    size_type idx = 0;
     // constructing new data using move-constructor
     for (; idx < size_; ++idx) {
       alloc_traits::construct(alloc_, new_buffer + idx,
                               std::move(old_buffer[idx]));
     }
     // calling the old data destructors
-    for (int i = 0; i < size_; ++i) {
+    for (size_type i = 0; i < size_; ++i) {
       alloc_traits::destroy(alloc_, old_buffer + i);
     }
   }
@@ -201,7 +209,7 @@ class KVector final {
                                   std::forward<Args>(args)...);
         }
       } catch (...) {
-        for (int del_idx = size_; del_idx < idx; ++del_idx) {
+        for (size_type del_idx = size_; del_idx < idx; ++del_idx) {
           alloc_traits::destroy(alloc_, buffer_ + del_idx);
         }
         throw;

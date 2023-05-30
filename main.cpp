@@ -47,23 +47,18 @@ int main() {
     vec.emplace_back(i);
   }
 
-  std::vector<int> std_vec(5);
-  auto std_it = std_vec.begin();
-  int shift_int = 5;
-  std_it += shift_int;
-  
-  long long shift_long = 5;
-  std_it += shift_long;
-
-  auto const_std_it = std_vec.cbegin();
-  (const_std_it + 5);
-
-  ink::KVector<int> new_vec(vec.begin(), vec.end());
-  for (auto&& num : new_vec) {
+  ink::KVector<int> iter_vec(vec.begin(), vec.end());
+  for (auto&& num : iter_vec) {
     std::cout << num << " ";
   }
   std::cout << "\n";
 
+  // SFINAE
+  ink::KVector<int> new_vec(5, 10);
+  for (auto&& num : new_vec) {
+    std::cout << num << " ";
+  }
+  std::cout << "\n";
 
   // auto it = vec.begin();
   // std::cout << *it;
