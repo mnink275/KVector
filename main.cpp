@@ -47,26 +47,20 @@ int main() {
     vec.emplace_back(i);
   }
 
-  ink::KVector<int> iter_vec(vec.begin(), vec.end());
-  for (auto&& num : iter_vec) {
+  ink::KVector init_vec(5, 4);
+  for (auto&& num : init_vec) {
     std::cout << num << " ";
   }
-  std::cout << "\n";
+  std::cout <<"\n";
 
-  // max_size
-  ink::KVector<char> char_vec;
-  std::cout << char_vec.max_size() << "\n";
+  std::cout << sizeof(ink::KVector<int>) << "\n";
+  std::cout << sizeof(std::vector<int>) << "\n";
 
-  // std::vector<NonDefaultConstr> std_vec;
-  // std_vec.emplace_back(5);
-  // std_vec.emplace_back(5);
-  // std_vec.emplace_back(5);
-  ink::KVector<NonDefaultConstr> std_vec;
-  std_vec.emplace_back(5);
-  std_vec.emplace_back(5);
-  std_vec.emplace_back(5);
-
-
+  ink::KVector copy_vec(init_vec);
+  for (auto&& num : copy_vec) {
+    std::cout << num << " ";
+  }
+  std::cout <<"\n";
   // auto it = vec.begin();
   // std::cout << *it;
   // std::cout << "\n";

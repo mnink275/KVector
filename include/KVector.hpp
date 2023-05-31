@@ -1,7 +1,10 @@
 #pragma once
 
+#include <cassert>
+#include <initializer_list>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <type_traits>
 
 #include "Iterator.hpp"
@@ -33,6 +36,7 @@ class KVector final {
 
  public:
   KVector() = default;
+
   ~KVector() {
     // calling the data destructors
     for (size_type i = 0; i < size_; ++i) {
@@ -41,6 +45,35 @@ class KVector final {
     // clearing memory
     alloc_traits::deallocate(alloc_, buffer_, capacity_);
   }
+
+  KVector(const KVector& other) {
+    if (std::addressof(other) == this) return;
+
+    copyHandler(other);
+  }
+
+  KVector& operator=(const KVector& other) {
+    if (std::addressof(other) == this) *this;
+
+    copyHandler(other);
+    return *this;
+  }
+
+  KVector(KVector&& other) {
+    if (std::addressof(other) == this) return;
+
+    moveHandler(std::move(other));
+  }
+
+  KVector& operator=(KVector&& other) {
+    if (std::addressof(other) == this) *this;
+
+    moveHandler(std::move(other));
+    return *this;
+  }
+
+  KVector(const std::initializer_list<value_type> init_list)
+      : KVector(init_list.begin(), init_list.end()) {}
 
   KVector(size_type size) { resize(size); }
 
@@ -218,6 +251,37 @@ class KVector final {
 
       size_ = new_size;
     }
+  }
+
+  void moveHandler(KVector&& other) {
+    // calling the data destructors
+    for (size_type i = 0; i < size_; ++i) {
+      alloc_traits::destroy(alloc_, buffer_ + i);
+    }
+    // clearing memory
+    alloc_traits::deallocate(alloc_, buffer_, capacity_);
+
+    other.alloc_ = std::exchange(
+        alloc_, other.alloc_);  // TODO: allocators while move/copy c-tors
+    other.size_ = std::exchange(size_, other.size_);
+    other.capacity_ = std::exchange(capacity_, other.capacity_);
+    other.buffer_ = std::exchange(buffer_, other.buffer_);
+  }
+
+  void copyHandler(const KVector& other) {
+    // calling the data destructors
+    for (size_type i = 0; i < size_; ++i) {
+      alloc_traits::destroy(alloc_, buffer_ + i);
+    }
+    size_ = 0;
+
+    alloc_ = alloc_traits::select_on_container_copy_construction(other.alloc_);
+    reserve(other.capacity_);
+    // construct n objects;
+    for (size_type i = 0; i < other.size_; ++i) {
+      emplace_back(std::move(other[i]));
+    }
+    assert(size_ == other.size_);
   }
 
  private:

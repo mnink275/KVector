@@ -37,6 +37,8 @@ struct Kek {
   }
 };
 
+using size_type = ink::KVector<int>::size_type;
+
 // Test Fixture
 class KVectorTest : public ::testing::Test {
  protected:
@@ -132,113 +134,22 @@ TEST_F(KVectorTest, Iterators) {
   EXPECT_EQ(deduction_vec.capacity(), int_vec_.size());
 }
 
-
-#if 0  // future tests
-// find()
-TEST(UMapMethod, find) {
-  ink::KUnorderedMap<int, int> local_int_map;
-  for (int i = -10; i < 10; ++i) {
-    local_int_map[i] = i + 100;
+TEST_F(KVectorTest, Constructors) {
+  ink::KVector init_list_vec({0, 1, 2, 3, 4});
+  for (size_type i = 0; i < int_vec_.size(); ++i) {
+    EXPECT_EQ(init_list_vec[i], int_vec_[i]);
   }
-  EXPECT_EQ(local_int_map.find(5)->second, 105);
-  EXPECT_EQ(local_int_map.find(20), local_int_map.end());
-}
 
-// erase()
-TEST(UMapMethod, erase) {
-  ink::KUnorderedMap<int, int> local_int_map;
-  for (int i = -10; i < 10; ++i) {
-    local_int_map[i] = i + 100;
+  ink::KVector copy_int_vec(int_vec_);
+  for (size_type i = 0; i < int_vec_.size(); ++i) {
+    EXPECT_EQ(copy_int_vec[i], int_vec_[i]);
   }
-  EXPECT_EQ(local_int_map.find(5)->second, 105);
-  local_int_map.erase(5);
-  EXPECT_EQ(local_int_map.find(5), local_int_map.end());
-}
+  EXPECT_EQ(copy_int_vec.size(), int_vec_.size());
 
-// isEmpty()
-TEST(UMapMethod, isEmpty) {
-  ink::KUnorderedMap<int, int> local_int_map;
-  for (int i = -10; i < 10; ++i) {
-    local_int_map[i] = i + 100;
+  ink::KVector tmp = copy_int_vec;
+  ink::KVector move_int_vec(std::move(tmp));
+  for (size_type i = 0; i < int_vec_.size(); ++i) {
+    EXPECT_EQ(copy_int_vec[i], move_int_vec[i]);
   }
-  EXPECT_FALSE(local_int_map.isEmpty());
-  local_int_map.clear();
-  EXPECT_TRUE(local_int_map.isEmpty());
+  EXPECT_EQ(copy_int_vec.size(), move_int_vec.size());
 }
-
-// // copy and move operator=()
-// TEST(UMapMethod, CopyAndMoveAssignOperator) {
-//     ink::KUnorderedMap<int, int> local_int_map;
-//     for (int i = -10; i < 10; ++i) {
-//         local_int_map[i] = i + 100;
-//     }
-
-//     ink::KUnorderedMap<int, int> local_int_map_copy;
-//     local_int_map_copy = local_int_map;
-//     EXPECT_TRUE(local_int_map == local_int_map_copy);
-
-//     local_int_map_copy = std::move(local_int_map);
-//     EXPECT_TRUE(local_int_map == local_int_map_copy);
-// }
-
-// maxLoadFactor()
-TEST(UMapMethod, HashPolicy) {
-  ink::KUnorderedMap<int, int> local_int_map;
-  EXPECT_EQ(local_int_map.maxLoadFactor(), 2.0f);
-  local_int_map.maxLoadFactor(5.0f);
-  EXPECT_EQ(local_int_map.maxLoadFactor(), 5.0f);
-}
-
-// iterator and const_iterator
-TEST(UMapMethod, Iterators) {
-  ink::KUnorderedMap<int, int> iterator_test_map;
-  for (int i = 0; i < 10; i++) {
-    iterator_test_map[i] = i + 50;
-  }
-  auto it = iterator_test_map.begin();
-  auto const_it = iterator_test_map.cbegin();
-  for (size_t i = 0; i < 3; i++) {
-    ++it;
-    ++const_it;
-  }
-  EXPECT_EQ(it->second, 53);
-  EXPECT_EQ(const_it->second, 53);
-
-  auto begin_it = iterator_test_map.begin();
-  (*begin_it).second = 125;
-  EXPECT_EQ(iterator_test_map.begin()->second, 125);
-  // (*const_it).second = 125 <--- CE
-
-  for (size_t i = 0; i < 3; i++) {
-    --it;
-    --const_it;
-  }
-  EXPECT_EQ(it->second, 125);
-  EXPECT_EQ(const_it->second, 125);
-}
-
-// Construction from InputIt
-TEST(UMapInitialization, ConstructFromIterators) {
-  std::vector<std::pair<int, int>> storage = {{1, 10}, {2, 20}, {3, 30}};
-  ink::KUnorderedMap<int, int> local_int_map(storage.begin(), storage.end());
-  EXPECT_EQ(local_int_map[2], 20);
-
-  struct stateless {
-    stateless& operator=(const stateless& rhs) { return *this; }
-    bool operator==(const stateless& rhs) { return true; }
-  };
-
-#if 0
-    class BadOutputIterator {
-    public:
-    	using iterator_category = std::output_iterator_tag;
-    };
-
-    BadOutputIterator out_it;
-
-    // thanks for SFINAE
-    ink::KUnorderedMap<stateless, stateless> test(out_it, out_it);
-    // this is CE --------------------------------^^^^^^^^^^^^^^^
-#endif
-}
-#endif
