@@ -53,12 +53,19 @@ int main() {
   }
   std::cout << "\n";
 
-  // SFINAE
-  ink::KVector<int> new_vec(5, 10);
-  for (auto&& num : new_vec) {
-    std::cout << num << " ";
-  }
-  std::cout << "\n";
+  // max_size
+  ink::KVector<char> char_vec;
+  std::cout << char_vec.max_size() << "\n";
+
+  // std::vector<NonDefaultConstr> std_vec;
+  // std_vec.emplace_back(5);
+  // std_vec.emplace_back(5);
+  // std_vec.emplace_back(5);
+  ink::KVector<NonDefaultConstr> std_vec;
+  std_vec.emplace_back(5);
+  std_vec.emplace_back(5);
+  std_vec.emplace_back(5);
+
 
   // auto it = vec.begin();
   // std::cout << *it;

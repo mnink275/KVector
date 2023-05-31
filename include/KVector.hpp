@@ -3,7 +3,6 @@
 #include <iostream>
 #include <iterator>
 #include <type_traits>
-#include <vector>
 
 #include "Iterator.hpp"
 
@@ -82,6 +81,8 @@ class KVector final {
   bool empty() const noexcept { return size_ == 0; }
 
   size_type size() const noexcept { return size_; }
+
+  size_type max_size() const noexcept { return 1e9 / sizeof(value_type); }
 
   void reserve(size_type new_capacity) {
     if (new_capacity > capacity_) {
@@ -226,5 +227,10 @@ class KVector final {
 
   pointer buffer_{nullptr};
 };
+
+// deduction hint for CTAD
+template <class InputIt>
+KVector(InputIt first, InputIt last)
+    -> KVector<typename std::iterator_traits<InputIt>::value_type>;
 
 }  // namespace ink

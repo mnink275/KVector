@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <type_traits>
 #include <vector>
 
 namespace ink {
@@ -37,6 +35,11 @@ class CommonIterator {
     return *this;
   }
 
+  std::conditional_t<IsConst, const value_type&, value_type&> operator[](
+      const difference_type idx) const noexcept {
+    return *(ptr_ + idx);
+  }
+
   std::conditional_t<IsConst, const value_type&, value_type&> operator*()
       const noexcept {
     return *ptr_;
@@ -57,13 +60,34 @@ class CommonIterator {
     return ptr_;
   }
 
+  friend bool operator<(const CommonIterator& left,
+                        const CommonIterator& right) noexcept {
+    return left.ptr_ < right.ptr_;
+  }
+
+  friend bool operator<=(const CommonIterator& left,
+                         const CommonIterator& right) noexcept {
+    return left.ptr_ < right.ptr_ || left.ptr_ == right.ptr_;
+  }
+
+  friend bool operator>(const CommonIterator& left,
+                        const CommonIterator& right) noexcept {
+    return left.ptr_ > right.ptr_;
+  }
+
+  friend bool operator>=(const CommonIterator& left,
+                         const CommonIterator& right) noexcept {
+    return left.ptr_ > right.ptr_ || left.ptr_ == right.ptr_;
+    ;
+  }
+
   friend bool operator!=(const CommonIterator& left,
-                         const CommonIterator& right) {
+                         const CommonIterator& right) noexcept {
     return left.ptr_ != right.ptr_;
   }
 
   friend bool operator==(const CommonIterator& left,
-                         const CommonIterator& right) {
+                         const CommonIterator& right) noexcept {
     return left.ptr_ == right.ptr_;
   }
 

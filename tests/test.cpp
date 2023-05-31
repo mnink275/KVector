@@ -8,8 +8,8 @@ struct NonDefaultConstr {
   NonDefaultConstr(int new_num) : num(new_num) {}
   NonDefaultConstr(const NonDefaultConstr&) = delete;
   NonDefaultConstr& operator=(const NonDefaultConstr&) = delete;
-  NonDefaultConstr(NonDefaultConstr&&) = delete;
-  NonDefaultConstr& operator=(NonDefaultConstr&&) = delete;
+  NonDefaultConstr(NonDefaultConstr&&) = default;
+  NonDefaultConstr& operator=(NonDefaultConstr&&) = default;
   int num;
 };
 
@@ -37,7 +37,6 @@ struct Kek {
   }
 };
 
-#if 1
 // Test Fixture
 class KVectorTest : public ::testing::Test {
  protected:
@@ -56,9 +55,7 @@ class KVectorTest : public ::testing::Test {
   ink::KVector<Kek> kek_move_vec_;
 };
 
-#endif
-
-TEST_F(KVectorTest, pop_back) {
+TEST_F(KVectorTest, Modifiers) {
   EXPECT_TRUE(empty_vec_.empty());
   EXPECT_EQ(empty_vec_.size(), 0);
 
@@ -79,9 +76,15 @@ TEST_F(KVectorTest, pop_back) {
     kek_move_vec_.pop_back();
   }
   EXPECT_EQ(kek_move_vec_.size(), 0);
+
+  ink::KVector<NonDefaultConstr> std_vec;
+  for (int i = 0; i < 3; ++i) {
+    std_vec.emplace_back(i);
+    EXPECT_EQ(std_vec[i].num, i);
+  }
 }
 
-TEST_F(KVectorTest, reserve_resize) {
+TEST_F(KVectorTest, Capacity) {
   empty_vec_.reserve(5);
   EXPECT_TRUE(empty_vec_.empty());
   empty_vec_.resize(5);
@@ -106,7 +109,7 @@ TEST_F(KVectorTest, reserve_resize) {
   EXPECT_EQ(int_vec_.size(), 3);
 }
 
-TEST_F(KVectorTest, iterators) {
+TEST_F(KVectorTest, Iterators) {
   EXPECT_EQ(empty_vec_.begin(), empty_vec_.end());
   EXPECT_EQ(empty_vec_.rbegin(), empty_vec_.rend());
 
@@ -114,7 +117,21 @@ TEST_F(KVectorTest, iterators) {
   for (auto&& num : int_vec_) {
     EXPECT_EQ(num, value++);
   }
+
+  auto it = int_vec_.begin();
+  auto next_it = std::next(it, 2);
+  EXPECT_TRUE(it < next_it);
+  EXPECT_FALSE(it > next_it);
+  EXPECT_TRUE(it <= next_it);
+  EXPECT_FALSE(it >= next_it);
+  EXPECT_FALSE(it == next_it);
+  EXPECT_TRUE(it != next_it);
+
+  ink::KVector deduction_vec(int_vec_.begin(), int_vec_.end());
+  EXPECT_EQ(deduction_vec.size(), int_vec_.size());
+  EXPECT_EQ(deduction_vec.capacity(), int_vec_.size());
 }
+
 
 #if 0  // future tests
 // find()
