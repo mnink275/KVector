@@ -11,8 +11,8 @@ struct NonDefaultConstr {
   NonDefaultConstr(int new_num) : num(new_num) {}
   NonDefaultConstr(const NonDefaultConstr&) = delete;
   NonDefaultConstr& operator=(const NonDefaultConstr&) = delete;
-  NonDefaultConstr(NonDefaultConstr&&) = delete;
-  NonDefaultConstr& operator=(NonDefaultConstr&&) = delete;
+  NonDefaultConstr(NonDefaultConstr&&) = default;
+  NonDefaultConstr& operator=(NonDefaultConstr&&) = default;
   int num;
 };
 
