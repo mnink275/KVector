@@ -4,7 +4,7 @@
 #include <exception>
 #include <numeric>
 
-#include "include/KVector.hpp"
+#include <KVector.hpp>
 
 struct NonDefaultConstr {
   NonDefaultConstr() = delete;
