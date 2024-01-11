@@ -5,36 +5,40 @@
 
 struct NonDefaultConstr {
   NonDefaultConstr() = delete;
-  NonDefaultConstr(int new_num) : num(new_num) {}
+  explicit NonDefaultConstr(int new_num) : num(new_num) {}
+
+  ~NonDefaultConstr() = default;
+
   NonDefaultConstr(const NonDefaultConstr&) = delete;
   NonDefaultConstr& operator=(const NonDefaultConstr&) = delete;
+
   NonDefaultConstr(NonDefaultConstr&&) = default;
   NonDefaultConstr& operator=(NonDefaultConstr&&) = default;
+
   int num;
 };
 
 struct Kek {
-  long long* ptr{nullptr};
+  int64_t* ptr{nullptr};
 
-  Kek() {
-    // std::cout << "Kek()\n";
-    ptr = new long long(5);
-  }
+  Kek() : ptr(new std::int64_t(5)) {}
 
-  ~Kek() {
-    // std::cout << "~Kek()\n";
-    delete ptr;
-  }
+  ~Kek() { delete ptr; }
+
   Kek(const Kek& some_kek) {
-    // std::cout << "Kek(const Kek&)\n";
-    ptr = new long long(*(some_kek.ptr));
-  }
-  Kek(Kek&& some_kek) noexcept {
-    // std::cout << "Kek(Kek&&)\n";
     delete ptr;
+    // NOLINTNEXTLINE (cppcoreguidelines-prefer-member-initializer)
+    ptr = new int64_t(*(some_kek.ptr));
+  }
+  Kek& operator=(const Kek&) = delete;
+
+  Kek(Kek&& some_kek) noexcept {
+    delete ptr;
+    // NOLINTNEXTLINE (cppcoreguidelines-prefer-member-initializer)
     ptr = some_kek.ptr;
     some_kek.ptr = nullptr;
   }
+  Kek& operator=(Kek&&) = delete;
 };
 
 using size_type = ink::KVector<int>::size_type;

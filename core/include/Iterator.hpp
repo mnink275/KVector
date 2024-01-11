@@ -22,9 +22,6 @@ class CommonIterator {
  public:
   explicit CommonIterator(pointer ptr) noexcept : ptr_(ptr){};
 
-  CommonIterator(const CommonIterator<T, false>& non_const_it) noexcept
-      : ptr_(non_const_it.ptr_) {}
-
   CommonIterator& operator+=(const difference_type shift) noexcept {
     ptr_ += shift;
     return *this;

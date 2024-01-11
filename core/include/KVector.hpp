@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 #include <Iterator.hpp>
 
@@ -59,13 +60,13 @@ class KVector final {
     return *this;
   }
 
-  KVector(KVector&& other) {
+  KVector(KVector&& other) noexcept {
     if (std::addressof(other) == this) return;
 
     moveHandler(std::move(other));
   }
 
-  KVector& operator=(KVector&& other) {
+  KVector& operator=(KVector&& other) noexcept {
     if (std::addressof(other) == this) *this;
 
     moveHandler(std::move(other));
@@ -75,7 +76,7 @@ class KVector final {
   KVector(const std::initializer_list<value_type> init_list)
       : KVector(init_list.begin(), init_list.end()) {}
 
-  KVector(size_type size) { resize(size); }
+  explicit KVector(size_type size) { resize(size); }
 
   KVector(size_type size, const value_type& value) { resize(size, value); }
 
@@ -111,11 +112,13 @@ class KVector final {
   const_reverse_iterator crend() { return const_reverse_iterator(cbegin()); }
 
   // Capacity
-  bool empty() const noexcept { return size_ == 0; }
+  [[nodiscard]] bool empty() const noexcept { return size_ == 0; }
 
-  size_type size() const noexcept { return size_; }
+  [[nodiscard]] size_type size() const noexcept { return size_; }
 
-  size_type max_size() const noexcept { return 1e9 / sizeof(value_type); }
+  [[nodiscard]] size_type max_size() const noexcept {
+    return 1e9 / sizeof(value_type);
+  }
 
   void reserve(size_type new_capacity) {
     if (new_capacity > capacity_) {
@@ -123,7 +126,7 @@ class KVector final {
     }
   }
 
-  size_type capacity() const noexcept { return capacity_; }
+  [[nodiscard]] size_type capacity() const noexcept { return capacity_; }
 
   void shrink_to_fit() {
     if (capacity_ > size_) {
