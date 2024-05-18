@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <iterator>
 
 namespace ink {
 
@@ -20,7 +20,9 @@ class CommonIterator {
   using const_iterator = CommonIterator<T, true>;
 
  public:
-  explicit CommonIterator(pointer ptr) noexcept : ptr_(ptr){};
+  CommonIterator() noexcept : ptr_(nullptr) {};
+  
+  explicit CommonIterator(pointer ptr) noexcept : ptr_(ptr) {};
 
   CommonIterator& operator+=(const difference_type shift) noexcept {
     ptr_ += shift;
@@ -47,9 +49,21 @@ class CommonIterator {
     return *this;
   }
 
+  CommonIterator operator++(int) noexcept {
+    auto tmp = *this;
+    ++ptr_;
+    return tmp;
+  }
+
   CommonIterator& operator--() noexcept {
     --ptr_;
     return *this;
+  }
+
+  CommonIterator operator--(int) noexcept {
+    auto tmp = *this;
+    --ptr_;
+    return tmp;
   }
 
   std::conditional_t<IsConst, const pointer, pointer> operator->()
@@ -57,36 +71,7 @@ class CommonIterator {
     return ptr_;
   }
 
-  friend bool operator<(const CommonIterator& left,
-                        const CommonIterator& right) noexcept {
-    return left.ptr_ < right.ptr_;
-  }
-
-  friend bool operator<=(const CommonIterator& left,
-                         const CommonIterator& right) noexcept {
-    return left.ptr_ < right.ptr_ || left.ptr_ == right.ptr_;
-  }
-
-  friend bool operator>(const CommonIterator& left,
-                        const CommonIterator& right) noexcept {
-    return left.ptr_ > right.ptr_;
-  }
-
-  friend bool operator>=(const CommonIterator& left,
-                         const CommonIterator& right) noexcept {
-    return left.ptr_ > right.ptr_ || left.ptr_ == right.ptr_;
-    ;
-  }
-
-  friend bool operator!=(const CommonIterator& left,
-                         const CommonIterator& right) noexcept {
-    return left.ptr_ != right.ptr_;
-  }
-
-  friend bool operator==(const CommonIterator& left,
-                         const CommonIterator& right) noexcept {
-    return left.ptr_ == right.ptr_;
-  }
+  auto operator<=>(const CommonIterator& rhs) const noexcept = default;
 
   friend difference_type operator-(const CommonIterator& lhs,
                                    const CommonIterator& rhs) noexcept {

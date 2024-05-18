@@ -34,6 +34,8 @@ class KVector final {
   using const_iterator = CommonIterator<T, false>;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+  static_assert(std::random_access_iterator<iterator>);
+  static_assert(std::random_access_iterator<const_iterator>);
 
  public:
   KVector() = default;
