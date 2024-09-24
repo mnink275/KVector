@@ -157,3 +157,7 @@ TEST_F(KVectorTest, Constructors) {
   }
   EXPECT_EQ(copy_int_vec.size(), move_int_vec.size());
 }
+
+TEST(VectorSizeOf, EBCO) {
+  static_assert(sizeof(ink::KVector<int>) == 24);
+}

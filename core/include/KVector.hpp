@@ -9,12 +9,16 @@
 #include <utility>
 
 #include <Iterator.hpp>
+#include <VectorBase.hpp>
 
 namespace ink {
 
 template <class T, class Allocator = std::allocator<T>>
-class KVector final {
+class KVector final : public impl::MemoryManager<Allocator, std::is_empty_v<Allocator>> {
  private:
+  using Base = impl::MemoryManager<Allocator, std::is_empty_v<Allocator>>;
+  using Base::GetAllocator;
+
   using alloc_traits = std::allocator_traits<Allocator>;
   template <class InputIt>
   using iterator_category_t =
@@ -43,10 +47,10 @@ class KVector final {
   ~KVector() {
     // calling the data destructors
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, buffer_ + i);
+      alloc_traits::destroy(GetAllocator(), buffer_ + i);
     }
     // clearing memory
-    alloc_traits::deallocate(alloc_, buffer_, capacity_);
+    alloc_traits::deallocate(GetAllocator(), buffer_, capacity_);
   }
 
   KVector(const KVector& other) {
@@ -139,7 +143,7 @@ class KVector final {
   // Modifiers
   void clear() noexcept {
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, buffer_ + i);
+      alloc_traits::destroy(GetAllocator(), buffer_ + i);
     }
   }
 
@@ -156,14 +160,14 @@ class KVector final {
     }
 
     const auto& construction_place = buffer_ + size_;
-    alloc_traits::construct(alloc_, construction_place,
+    alloc_traits::construct(GetAllocator(), construction_place,
                             std::forward<Args>(args)...);
     ++size_;
   }
 
   void pop_back() noexcept {
     --size_;
-    alloc_traits::destroy(alloc_, buffer_ + size_);
+    alloc_traits::destroy(GetAllocator(), buffer_ + size_);
   }
 
   void resize(size_type new_size) { resizeVector(new_size); }
@@ -174,7 +178,7 @@ class KVector final {
 
  private:
   void reallocateBuffer(size_type new_capacity) {
-    pointer new_buffer = alloc_traits::allocate(alloc_, new_capacity);
+    pointer new_buffer = alloc_traits::allocate(GetAllocator(), new_capacity);
 
     if (buffer_ != nullptr) {
       try {
@@ -185,12 +189,12 @@ class KVector final {
           createBufferCopy(new_buffer, buffer_);
         }
       } catch (...) {
-        alloc_traits::deallocate(alloc_, new_buffer, new_capacity);
+        alloc_traits::deallocate(GetAllocator(), new_buffer, new_capacity);
         throw;
       }
     }
 
-    alloc_traits::deallocate(alloc_, buffer_, capacity_);
+    alloc_traits::deallocate(GetAllocator(), buffer_, capacity_);
     buffer_ = new_buffer;
     capacity_ = new_capacity;
   }
@@ -200,18 +204,18 @@ class KVector final {
     try {
       // constructing new data using copy-constructor
       for (; idx < size_; ++idx) {
-        alloc_traits::construct(alloc_, new_buffer + idx, old_buffer[idx]);
+        alloc_traits::construct(GetAllocator(), new_buffer + idx, old_buffer[idx]);
       }
     } catch (...) {
       // calling the new data destructors
       for (size_type del_idx = 0; del_idx < idx; ++del_idx) {
-        alloc_traits::destroy(alloc_, new_buffer + del_idx);
+        alloc_traits::destroy(GetAllocator(), new_buffer + del_idx);
       }
       throw;
     }
     // calling the old data destructors
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, old_buffer + i);
+      alloc_traits::destroy(GetAllocator(), old_buffer + i);
     }
   }
 
@@ -219,12 +223,12 @@ class KVector final {
     size_type idx = 0;
     // constructing new data using move-constructor
     for (; idx < size_; ++idx) {
-      alloc_traits::construct(alloc_, new_buffer + idx,
+      alloc_traits::construct(GetAllocator(), new_buffer + idx,
                               std::move(old_buffer[idx]));
     }
     // calling the old data destructors
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, old_buffer + i);
+      alloc_traits::destroy(GetAllocator(), old_buffer + i);
     }
   }
 
@@ -244,12 +248,12 @@ class KVector final {
       std::size_t idx = size_;
       try {
         for (; idx < new_size; ++idx) {
-          alloc_traits::construct(alloc_, buffer_ + idx,
+          alloc_traits::construct(GetAllocator(), buffer_ + idx,
                                   std::forward<Args>(args)...);
         }
       } catch (...) {
         for (size_type del_idx = size_; del_idx < idx; ++del_idx) {
-          alloc_traits::destroy(alloc_, buffer_ + del_idx);
+          alloc_traits::destroy(GetAllocator(), buffer_ + del_idx);
         }
         throw;
       }
@@ -261,13 +265,13 @@ class KVector final {
   void moveHandler(KVector&& other) {
     // calling the data destructors
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, buffer_ + i);
+      alloc_traits::destroy(GetAllocator(), buffer_ + i);
     }
     // clearing memory
-    alloc_traits::deallocate(alloc_, buffer_, capacity_);
+    alloc_traits::deallocate(GetAllocator(), buffer_, capacity_);
 
-    other.alloc_ = std::exchange(
-        alloc_, other.alloc_);  // TODO: allocators while move/copy c-tors
+    other.GetAllocator() = std::exchange(
+        GetAllocator(), other.GetAllocator());  // TODO: allocators while move/copy c-tors
     other.size_ = std::exchange(size_, other.size_);
     other.capacity_ = std::exchange(capacity_, other.capacity_);
     other.buffer_ = std::exchange(buffer_, other.buffer_);
@@ -276,11 +280,11 @@ class KVector final {
   void copyHandler(const KVector& other) {
     // calling the data destructors
     for (size_type i = 0; i < size_; ++i) {
-      alloc_traits::destroy(alloc_, buffer_ + i);
+      alloc_traits::destroy(GetAllocator(), buffer_ + i);
     }
     size_ = 0;
 
-    alloc_ = alloc_traits::select_on_container_copy_construction(other.alloc_);
+    GetAllocator() = alloc_traits::select_on_container_copy_construction(other.GetAllocator());
     reserve(other.capacity_);
     // construct n objects;
     for (size_type i = 0; i < other.size_; ++i) {
@@ -292,8 +296,6 @@ class KVector final {
  private:
   std::size_t size_{0};
   std::size_t capacity_{0};
-  std::allocator<value_type> alloc_;  // TODO: EBCO
-
   pointer buffer_{nullptr};
 };
 
